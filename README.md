@@ -15,6 +15,7 @@ Each subject has its own folder. Inside you'll find my notes on the main topics,
 | Subject | What it covers |
 
 | Introduction to Computer Engineering | curl, VM and SSH, Docker, Linux basics |
+
 | More coming... | I add a new folder as I finish each subject |
 
 ## A quick heads-up
