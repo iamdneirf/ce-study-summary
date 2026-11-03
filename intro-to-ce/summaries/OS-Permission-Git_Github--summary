@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>OS · Permission · Git/GitHub – สรุปไว้ดูสอบ</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f4f6fb;--card:#fff;--text:#1c2433;--muted:#5d6881;--line:#dde3ef;--chip:#eef2ff;--code:#0f172a;--codet:#e2e8f0;
+  --blue:#3b82f6;--teal:#14b8a6;--purple:#8b5cf6;--amber:#f59e0b;--red:#ef4444;--green:#10b981;--pink:#ec4899;--slate:#64748b;
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){--bg:#0f1420;--card:#171e2e;--text:#e8edf8;--muted:#9aa6c0;--line:#2a3550;--chip:#1f2a45;--code:#0a0f1a;--slate:#56657d}
+}
+:root[data-theme="dark"]{--bg:#0f1420;--card:#171e2e;--text:#e8edf8;--muted:#9aa6c0;--line:#2a3550;--chip:#1f2a45;--code:#0a0f1a;--slate:#56657d}
+html{height:100%;scroll-padding-top:70px}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:"Noto Sans Thai",system-ui,sans-serif;line-height:1.7;font-size:16px}
+header{padding:36px 20px 20px;text-align:center}
+header h1{margin:0 0 6px;font-size:clamp(24px,5vw,36px)}
+header p{margin:0;color:var(--muted)}
+nav{position:sticky;top:0;z-index:10;background:var(--bg);border-bottom:1px solid var(--line);display:flex;gap:8px;overflow-x:auto;padding:10px 16px;white-space:nowrap}
+nav a{flex:none;text-decoration:none;color:var(--text);background:var(--chip);padding:6px 14px;border-radius:99px;font-size:14px;font-weight:500}
+main{max-width:1000px;margin:0 auto;padding:16px}
+section{margin:30px 0}
+h2{font-size:23px;margin:0 0 4px}
+h3{margin:18px 0 6px;font-size:17px}
+.sub{color:var(--muted);margin:0 0 14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;margin-bottom:14px}
+.card h3:first-child{margin-top:0}
+.grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(270px,1fr))}
+code{font-family:ui-monospace,Menlo,Consolas,monospace;background:var(--chip);padding:1px 6px;border-radius:5px;font-size:.88em}
+pre{background:var(--code);color:var(--codet);padding:12px 14px;border-radius:11px;overflow-x:auto;font-size:13px;line-height:1.6;margin:8px 0}
+pre .c{color:#7dd3fc}pre .g{color:#86efac}
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{border-bottom:1px solid var(--line);padding:9px 10px;text-align:left;vertical-align:top}
+th{background:var(--chip);font-size:13px}
+.note{font-size:14px;color:var(--muted)}
+.qa{border-left:4px solid var(--blue);padding:8px 14px;margin:10px 0;background:var(--chip);border-radius:0 10px 10px 0}
+.qa b{display:block;margin-bottom:2px}
+.warn{border-left-color:var(--red)}
+.tag{display:inline-block;font-size:12px;padding:2px 10px;border-radius:99px;background:var(--chip);color:var(--muted);margin-bottom:6px}
+.stack{display:flex;flex-direction:column;gap:5px;margin:10px 0}
+.L{border-radius:9px;padding:8px 10px;text-align:center;font-size:14px;font-weight:500;color:#fff}
+.L small{display:block;font-weight:400;opacity:.92;font-size:12px}
+.row{display:flex;gap:6px}.row>*{flex:1}
+.b{background:var(--blue)}.t{background:var(--teal)}.p{background:var(--purple)}.a{background:var(--amber)}.r{background:var(--red)}.gr{background:var(--green)}.pk{background:var(--pink)}.sl{background:var(--slate)}
+.life{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px}
+.node{padding:10px 14px;border-radius:11px;color:#fff;font-weight:500;font-size:14px;text-align:center}
+.node small{display:block;font-weight:400;opacity:.92;font-size:12px}
+.ar{color:var(--muted);font-size:13px;text-align:center}
+.ar b{display:block;font-family:ui-monospace,Menlo,monospace;color:var(--text);font-size:12px}
+/* tree */
+.tree{font-family:ui-monospace,Menlo,monospace;font-size:13.5px;line-height:1.8}
+.tree .d{color:var(--blue);font-weight:700}
+/* permission */
+.bits{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin:10px 0}
+.grp{border:2px solid var(--line);border-radius:12px;padding:8px 10px;text-align:center;min-width:110px}
+.grp .nm{font-size:12px;font-weight:700;margin-bottom:4px}
+.grp .ch{font-family:ui-monospace,monospace;font-size:20px;font-weight:700;letter-spacing:4px}
+.grp.u{border-color:var(--blue)}.grp.g{border-color:var(--teal)}.grp.o{border-color:var(--amber)}.grp.ty{border-color:var(--purple)}
+.calc{display:grid;grid-template-columns:auto repeat(3,1fr);gap:6px 10px;align-items:center;max-width:420px;margin:10px auto}
+.calc label{display:flex;gap:6px;align-items:center;justify-content:center;font-family:ui-monospace,monospace;font-size:14px;cursor:pointer}
+.calc .h{font-size:12px;color:var(--muted);text-align:center}
+.out{text-align:center;margin-top:10px;font-family:ui-monospace,monospace;font-size:20px}
+.out b{background:var(--chip);padding:4px 12px;border-radius:9px;margin:0 4px}
+.allow{color:var(--green);font-weight:700}.deny{color:var(--red);font-weight:700}
+/* repo topology */
+.net{display:flex;align-items:stretch;justify-content:center;gap:10px;flex-wrap:wrap}
+.box{padding:12px 14px;border-radius:12px;color:#fff;font-weight:700;text-align:center;font-size:14px;min-width:150px;flex:1;max-width:300px}
+.box small{display:block;font-weight:400;font-size:12px}
+.mid{display:flex;flex-direction:column;justify-content:center;gap:10px;text-align:center;font-size:13px;min-width:130px}
+.mid .push{color:var(--green);font-weight:700}.mid .pull{color:var(--blue);font-weight:700}
+footer{text-align:center;color:var(--muted);padding:24px;font-size:14px}
+</style>
+</head>
+<body>
+<header>
+  <h1>OS · Permission · Git / GitHub</h1>
+  <p>สรุปจากโน้ตลายมือ เรื่อง Basic OS concepts และ Git/GitHub (ไม่รวมคำสั่ง Linux)</p>
+</header>
+<nav><a href="#os">1 OS</a><a href="#fs">2 File System</a><a href="#posix">3 POSIX Permission</a><a href="#acl">4 Windows ACL</a><a href="#proc">5 Process</a><a href="#git">6 Git</a><a href="#github">7 GitHub</a><a href="#auth">8 Authentication</a></nav>
+<main>
+
+<!-- OS -->
+<section id="os">
+  <h2>1 · OS อยู่ตรงไหนของระบบคอมพิวเตอร์</h2>
+  <p class="sub">OS (Operating System) เป็นซอฟต์แวร์ที่คั่นกลางระหว่าง Application กับ Hardware</p>
+  <div class="grid">
+    <div class="card">
+      <span class="tag">ชั้นของ computer system</span>
+      <div class="stack">
+        <div class="row"><div class="L t">App 1</div><div class="L t">App 2</div><div class="L t">App 3</div></div>
+        <div class="L p">Operating System<small>Windows · macOS · Linux · Android · iOS</small></div>
+        <div class="L sl">Hardware<small>CPU · RAM · Storage (HDD/SSD) · I/O</small></div>
+      </div>
+      <p class="note">Hardware = ส่วนที่จับต้องได้ · Software (OS, App) = จับต้องไม่ได้</p>
+    </div>
+    <div class="card">
+      <span class="tag">หน้าที่หลักของ OS</span>
+      <p><b>Resource manager</b> แบ่งและควบคุมการใช้ CPU, RAM, Storage, อุปกรณ์ I/O ให้แต่ละโปรแกรมไม่ชนกัน</p>
+      <p><b>Abstraction</b> ให้ App ใช้ฮาร์ดแวร์ผ่านชั้นกลาง ไม่ต้องรู้รายละเอียดฮาร์ดแวร์</p>
+      <p><b>File system</b> จัดเก็บและจัดการไฟล์/โฟลเดอร์</p>
+      <p><b>Security / Privacy</b> ควบคุมสิทธิ์การเข้าถึง รองรับหลาย user (multi-user)</p>
+      <p><b>Process management</b> จัดการโปรแกรมที่กำลังรัน</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>App เข้าถึง Hardware ได้ 2 ทาง</h3>
+    <div class="grid">
+      <div>
+        <div class="L r">ทาง ① เข้าโดยตรง</div>
+        <div class="stack">
+          <div class="row"><div class="L t">App 1</div><div class="L t">App 2</div></div>
+          <div class="L sl">Hardware</div>
+        </div>
+        <p class="note"><span class="deny">ปัญหา:</span> ถ้า App ใช้ฮาร์ดแวร์พร้อมกัน จะควบคุมไม่ได้ ข้อมูลชนกัน เขียนทับกัน ไม่มีใครจัดลำดับ</p>
+      </div>
+      <div>
+        <div class="L gr">ทาง ② ผ่าน OS</div>
+        <div class="stack">
+          <div class="row"><div class="L t">App 1</div><div class="L t">App 2</div></div>
+          <div class="L p">OS (resource manager)</div>
+          <div class="L sl">Hardware</div>
+        </div>
+        <p class="note"><span class="allow">ข้อดี:</span> OS จัดคิว แบ่งทรัพยากร และป้องกันไม่ให้ App กวนกัน ใช้ได้หลาย App พร้อมกัน</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FS -->
+<section id="fs">
+  <h2>2 · File และ File System</h2>
+  <div class="grid">
+    <div class="card">
+      <h3>File</h3>
+      <p>ที่เก็บข้อมูล (data) ใน Storage ประกอบด้วย <b>เนื้อหา</b> + <b>metadata</b> (ข้อมูลอธิบายไฟล์)</p>
+      <p class="note">Metadata เช่น ชื่อไฟล์, ขนาด, วันที่แก้ไข (date modified), ตำแหน่งที่เก็บ (location), เจ้าของ (owner), permission</p>
+    </div>
+    <div class="card">
+      <h3>File System</h3>
+      <p>วิธีที่ OS ใช้จัดระเบียบและเก็บไฟล์ใน Storage: จัดเป็นโครงสร้าง <b>folder / file</b> แบบต้นไม้, จองพื้นที่ (allocation), เก็บ metadata, ควบคุมสิทธิ์</p>
+      <p class="note">ตัวอย่าง: <b>NTFS, FAT32</b> (Windows) · <b>ext4</b> (Linux)</p>
+    </div>
+  </div>
+  <div class="card">
+    <h3>โครงสร้างแบบต้นไม้ (directory tree)</h3>
+    <div class="tree">
+<span class="d">root /</span><br>
+├─ <span class="d">folder 1</span><br>
+│&nbsp;&nbsp;&nbsp;├─ file n<br>
+│&nbsp;&nbsp;&nbsp;└─ <span class="d">folder 2</span> ── file n<br>
+├─ <span class="d">folder 3</span> ── file n<br>
+└─ <span class="d">home</span> ── <span class="d">user</span> ── (ที่ทำงานของ user)
+    </div>
+    <p class="note">ไฟล์/โฟลเดอร์ชื่อซ้ำกันได้ถ้าอยู่คนละโฟลเดอร์ เพราะ path ไม่เหมือนกัน</p>
+  </div>
+</section>
+
+<!-- POSIX -->
+<section id="posix">
+  <h2>3 · Permission แบบ POSIX (Linux · macOS · UNIX)</h2>
+  <p class="sub">POSIX = มาตรฐานของระบบตระกูล UNIX ใช้ permission 3 กลุ่ม × 3 สิทธิ์</p>
+
+  <div class="grid">
+    <div class="card">
+      <h3>3 กลุ่มผู้ใช้</h3>
+      <p><b style="color:var(--blue)">u</b> owner (เจ้าของไฟล์)</p>
+      <p><b style="color:var(--teal)">g</b> group (กลุ่มของเจ้าของ)</p>
+      <p><b style="color:var(--amber)">o</b> others (คนอื่นทั้งหมด)</p>
+    </div>
+    <div class="card">
+      <h3>3 สิทธิ์</h3>
+      <p><code>r</code> read = <b>4</b></p>
+      <p><code>w</code> write = <b>2</b></p>
+      <p><code>x</code> execute = <b>1</b></p>
+      <p class="note">รวมเลข: rwx = 7, rw- = 6, r-x = 5, r-- = 4, --- = 0</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>อ่านผลจาก ls -l</h3>
+    <div class="bits">
+      <div class="grp ty"><div class="nm">ชนิด</div><div class="ch">-</div></div>
+      <div class="grp u"><div class="nm">owner (u)</div><div class="ch">rwx</div></div>
+      <div class="grp g"><div class="nm">group (g)</div><div class="ch">r-x</div></div>
+      <div class="grp o"><div class="nm">others (o)</div><div class="ch">r--</div></div>
+    </div>
+    <p style="text-align:center"><code>-rwxr-xr--</code> = <code>chmod 754</code></p>
+    <p class="note">ตัวแรก: <code>-</code> = ไฟล์ธรรมดา · <code>d</code> = directory</p>
+  </div>
+
+  <div class="card">
+    <h3>ลองคำนวณ chmod (ติ๊กแล้วดูผล)</h3>
+    <div class="calc" id="calc">
+      <span></span><span class="h">r (4)</span><span class="h">w (2)</span><span class="h">x (1)</span>
+      <b>owner</b><label><input type="checkbox" data-v="4" checked></label><label><input type="checkbox" data-v="2" checked></label><label><input type="checkbox" data-v="1" checked></label>
+      <b>group</b><label><input type="checkbox" data-v="4" checked></label><label><input type="checkbox" data-v="2"></label><label><input type="checkbox" data-v="1" checked></label>
+      <b>others</b><label><input type="checkbox" data-v="4" checked></label><label><input type="checkbox" data-v="2"></label><label><input type="checkbox" data-v="1" checked></label>
+    </div>
+    <div class="out"><b id="sym">rwxr-xr-x</b> = chmod <b id="num">755</b></div>
+  </div>
+
+  <div class="card tw">
+    <h3>ตัวอย่างที่ควรจำ</h3>
+    <table>
+      <tr><th>chmod</th><th>สัญลักษณ์</th><th>ความหมาย</th></tr>
+      <tr><td><code>400</code></td><td><code>r--------</code></td><td>owner อ่านได้อย่างเดียว คนอื่นทำอะไรไม่ได้เลย</td></tr>
+      <tr><td><code>644</code></td><td><code>rw-r--r--</code></td><td>owner อ่าน/เขียน, group และ others อ่านได้</td></tr>
+      <tr><td><code>664</code></td><td><code>rw-rw-r--</code></td><td>owner และ group อ่าน/เขียน, others อ่านได้</td></tr>
+      <tr><td><code>755</code></td><td><code>rwxr-xr-x</code></td><td>owner ทำได้ทุกอย่าง, คนอื่นอ่านและรันได้</td></tr>
+    </table>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <h3>สิทธิ์บนไฟล์ vs directory</h3>
+      <table>
+        <tr><th></th><th>ไฟล์</th><th>Directory</th></tr>
+        <tr><td><b>r</b></td><td>อ่านเนื้อหา</td><td>ดูรายชื่อไฟล์ข้างใน (ls)</td></tr>
+        <tr><td><b>w</b></td><td>แก้ไขเนื้อหา</td><td>สร้าง/ลบ/เปลี่ยนชื่อไฟล์ข้างใน</td></tr>
+        <tr><td><b>x</b></td><td>รันเป็นโปรแกรม</td><td>เข้าไปในโฟลเดอร์ได้ (cd)</td></tr>
+      </table>
+    </div>
+    <div class="card">
+      <h3>คำสั่งจัดการสิทธิ์</h3>
+      <p><code>chmod</code> เปลี่ยน permission</p>
+      <p><code>chown</code> เปลี่ยน owner</p>
+      <p><code>chgrp</code> เปลี่ยน group</p>
+      <p class="note">ผู้ที่สั่งได้คือ owner ของไฟล์หรือ admin (root) ตามโน้ต แต่ในระบบจริงการเปลี่ยน owner ด้วย chown มักต้องใช้สิทธิ์ root</p>
+    </div>
+  </div>
+</section>
+
+<!-- ACL -->
+<section id="acl">
+  <h2>4 · Windows: ACL (Access Control List)</h2>
+  <p class="sub">แทนที่จะมีแค่ u/g/o ตายตัว Windows ให้แต่ละไฟล์/โฟลเดอร์มี <b>รายการสิทธิ์</b> ของตัวเอง ละเอียดกว่า</p>
+
+  <div class="card">
+    <div class="life">
+      <div class="node b">File / Folder</div>
+      <div class="ar">มี →</div>
+      <div class="node p">ACL<small>Access Control List</small></div>
+      <div class="ar">ประกอบด้วย →</div>
+      <div class="node t">ACE 1<small>user 1 · Allow · Read, Write</small></div>
+      <div class="node t">ACE 2<small>group 1 · Allow · Modify</small></div>
+      <div class="node t">ACE n<small>user n · Deny · Write</small></div>
+    </div>
+    <p class="note" style="margin-top:10px"><b>ACE</b> (Access Control Entry) = 1 บรรทัดในรายการ ระบุว่า <b>ใคร</b> (user/group) + <b>Allow หรือ Deny</b> + <b>สิทธิ์อะไร</b></p>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <h3>กฎสำคัญ</h3>
+      <p><span class="deny">Deny สูงกว่า Allow</span> ถ้ามีทั้งสองอย่างขัดกัน Deny ชนะ</p>
+      <p><b>รวมสิทธิ์จากหลาย group</b> ถ้า user อยู่หลายกลุ่ม สิทธิ์ Allow จะรวมกัน</p>
+      <p><b>Inheritance</b> ไฟล์/โฟลเดอร์ย่อยรับ ACL มาจากโฟลเดอร์แม่โดยค่าเริ่มต้น เปลี่ยนได้</p>
+    </div>
+    <div class="card">
+      <h3>ระดับสิทธิ์ (จากน้อยไปมาก)</h3>
+      <p>Read → Write → Modify → <b>Full control</b></p>
+      <p class="note">Full control = ทำได้ทุกอย่าง รวมถึงเปลี่ยน permission และเปลี่ยน owner</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>ตัวอย่างโจทย์</h3>
+    <p>Group A: <span class="allow">Allow Modify</span> · User A (อยู่ใน Group A): <span class="allow">Allow Read</span> + <span class="deny">Deny Write</span></p>
+    <p><b>ผล:</b> User A <b>อ่านได้</b> แต่ <b>เขียนไม่ได้</b> เพราะ Deny Write ชนะ Allow Modify ที่ได้จากกลุ่ม</p>
+  </div>
+
+  <div class="card tw">
+    <h3>เทียบ POSIX กับ ACL</h3>
+    <table>
+      <tr><th></th><th>POSIX</th><th>Windows ACL</th></tr>
+      <tr><td>ระบบ</td><td>Linux, macOS, UNIX</td><td>Windows (NTFS)</td></tr>
+      <tr><td>โครงสร้าง</td><td>3 กลุ่มตายตัว: owner / group / others</td><td>รายการ ACE กี่รายการก็ได้ ระบุได้ทีละ user/group</td></tr>
+      <tr><td>สิทธิ์</td><td>r, w, x</td><td>Read, Write, Modify, Full control ฯลฯ</td></tr>
+      <tr><td>Deny</td><td>ไม่มี (ไม่ให้ = ทำไม่ได้)</td><td>มี และ Deny ชนะ Allow</td></tr>
+      <tr><td>ความละเอียด</td><td>เรียบง่าย</td><td>ละเอียดกว่า</td></tr>
+    </table>
+  </div>
+</section>
+
+<!-- PROCESS -->
+<section id="proc">
+  <h2>5 · Process</h2>
+  <div class="grid">
+    <div class="card">
+      <h3>Program vs Process</h3>
+      <p><b>Program</b> = ไฟล์โปรแกรมที่เก็บอยู่ใน storage (ยังไม่ทำงาน)</p>
+      <p><b>Process</b> = โปรแกรมที่ <b>กำลังรัน</b> มี <b>PID</b> (Process ID) ประจำตัว</p>
+      <p class="note">โปรแกรมเดียวกันเปิดสองครั้ง = 2 process คนละ PID</p>
+    </div>
+    <div class="card">
+      <h3>OS จัดการ process</h3>
+      <p>แบ่งเวลา CPU ให้แต่ละ process, จัดสรร RAM, สร้าง/หยุด/จบ process</p>
+      <p>รัน <b>background</b> ได้ คือ process ทำงานต่อโดยไม่ค้างหน้าจอ terminal</p>
+      <p>kill process = สั่งให้ OS ปิด process ด้วย PID</p>
+    </div>
+  </div>
+</section>
+
+<!-- GIT -->
+<section id="git">
+  <h2>6 · Git (Version Control System)</h2>
+  <p class="sub">Git = เครื่องมือเก็บ <b>ประวัติการแก้ไข</b> ของโปรเจกต์ ย้อนกลับได้ ทำงานร่วมกันได้</p>
+
+  <div class="card">
+    <h3>ที่ที่โค้ดอยู่ 3 ระดับ</h3>
+    <div class="life">
+      <div class="node sl">Working directory<small>โฟลเดอร์ที่แก้ไฟล์</small></div>
+      <div class="ar">→<b>git add</b></div>
+      <div class="node a">Staging area<small>เตรียมเข้า commit</small></div>
+      <div class="ar">→<b>git commit</b></div>
+      <div class="node b">Local repo<small>ประวัติในเครื่อง</small></div>
+      <div class="ar">→<b>git push</b></div>
+      <div class="node gr">Remote repo<small>เช่น GitHub</small></div>
+    </div>
+    <p class="note" style="margin-top:10px"><b>Commit</b> = จุดบันทึก (snapshot) ของโปรเจกต์ พร้อมข้อความอธิบาย ใช้ย้อนกลับมาดูได้</p>
+  </div>
+
+  <div class="card">
+    <h3>Local repo + Remote repo</h3>
+    <div class="net">
+      <div class="box b">Local repo<small>ในเครื่องเรา (PC / NB)</small></div>
+      <div class="mid"><div class="push">push →<br><small style="color:var(--muted);font-weight:400">อัปเดต remote ให้ตรงกับ local</small></div><div class="pull">← pull<br><small style="color:var(--muted);font-weight:400">ดึงอัปเดตจาก remote มาที่ local</small></div></div>
+      <div class="box gr">Remote repo<small>บน server / cloud (GitHub)</small></div>
+    </div>
+    <p class="note" style="margin-top:10px">Remote repo ใช้ <b>backup</b> และแชร์งานกับคนอื่น · ก่อน push ต้องมี commit ใน local ที่พร้อมแล้ว</p>
+  </div>
+
+  <div class="card">
+    <h3>Branch</h3>
+    <p>สายการพัฒนาแยกจากสายหลัก ใช้แก้/เพิ่มฟีเจอร์โดยไม่กระทบสายหลัก แล้วค่อย merge กลับ</p>
+    <div class="life">
+      <div class="node b">main</div><div class="ar">──●──●────────●── (merge)</div>
+    </div>
+    <div class="life">
+      <div class="node p">dev branch</div><div class="ar">────●──●──●──↗</div>
+    </div>
+    <p class="note">ชื่อ branch หลักสมัยใหม่คือ <b>main</b> (เดิมคือ master) เปลี่ยนชื่อได้ด้วย <code>git branch -m master main</code> · สลับ branch ด้วย <code>git switch</code></p>
+  </div>
+
+  <div class="card">
+    <h3>ขั้นตอนเริ่มโปรเจกต์ใหม่ แล้วส่งขึ้น GitHub</h3>
+<pre><span class="c">1.</span> สร้าง local repo ในโฟลเดอร์โปรเจกต์      <span class="g"># git init</span>
+<span class="c">2.</span> แก้ไข / เพิ่ม / ลบไฟล์ แล้ว add + commit   <span class="g"># git add . ; git commit -m "ข้อความ"</span>
+<span class="c">3.</span> สร้าง remote repo บนเว็บ GitHub  → ได้ URL
+<span class="c">4.</span> git remote add origin &lt;URL&gt;            <span class="g"># ผูก local กับ remote ชื่อ origin</span>
+<span class="c">5.</span> git push -u origin main               <span class="g"># ครั้งแรก (-u จำ upstream) ครั้งต่อไป git push เฉยๆ</span>
+<span class="g"># ตรวจ remote ที่ผูกไว้:</span> git remote -v</pre>
+    <p class="note">Authentication ครั้งแรกจะถูกถามตอน push (ดูหัวข้อ 8)</p>
+  </div>
+
+  <div class="card">
+    <h3>เริ่มจากโปรเจกต์ที่มีอยู่แล้วบน GitHub</h3>
+<pre>git clone &lt;URL&gt;     <span class="g"># copy remote repo ทั้งก้อนมาเป็น local repo</span>
+git pull            <span class="g"># ดึงอัปเดตล่าสุดจาก remote มาที่เครื่องเรา</span>
+git push            <span class="g"># ส่ง commit ของเราขึ้น remote</span></pre>
+    <div class="qa"><b>clone vs pull</b>clone = ทำครั้งเดียวตอนเริ่ม (copy ทั้ง repo) · pull = ทำซ้ำเรื่อยๆ เพื่ออัปเดต repo ที่มีอยู่แล้ว</div>
+  </div>
+</section>
+
+<!-- GITHUB -->
+<section id="github">
+  <h2>7 · GitHub</h2>
+  <p class="sub">GitHub = แพลตฟอร์มบน cloud ที่ host <b>remote repo</b> ของ Git และมีเครื่องมือทำงานเป็นทีม (Git ≠ GitHub)</p>
+  <div class="grid">
+    <div class="card">
+      <h3>Git</h3>
+      <p>เครื่องมือ (software) ทำงานในเครื่องเรา จัดการ version ของโค้ด</p>
+    </div>
+    <div class="card">
+      <h3>GitHub</h3>
+      <p>บริการเว็บ เก็บ repo บน cloud: backup, แชร์, ทำงานร่วมกัน</p>
+    </div>
+  </div>
+  <div class="card tw">
+    <h3>ฟีเจอร์ของ GitHub</h3>
+    <table>
+      <tr><td><b>Remote repository</b></td><td>เก็บ repo บน cloud ใช้เป็นศูนย์กลางของทีม</td></tr>
+      <tr><td><b>Pull request</b></td><td>แจ้งว่าอยากให้นำการแก้ไขจาก branch ของเราไป merge</td></tr>
+      <tr><td><b>Code review</b></td><td>เพื่อนร่วมทีมตรวจโค้ด คอมเมนต์ แล้ว Approve</td></tr>
+      <tr><td><b>Issue</b></td><td>เหมือนกระดานสนทนา/รายการงาน แจ้งบั๊กหรือขอฟีเจอร์</td></tr>
+      <tr><td><b>Access control</b></td><td>กำหนดว่าใครเข้าถึง/แก้ไข repo ได้ (เช่น เพิ่มเป็น Collaborator)</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>Workflow ทำงานเป็นทีม (Dev A เจ้าของ Proj A, Dev B ร่วมทีม)</h3>
+    <div class="life">
+      <div class="node b">① Dev A สร้าง repo<small>Proj A บน GitHub</small></div>
+      <div class="ar">→</div>
+      <div class="node b">② เพิ่ม Dev B<small>เป็น Collaborator</small></div>
+      <div class="ar">→</div>
+      <div class="node p">③ Dev B clone<small>ได้ local repo</small></div>
+    </div>
+    <div class="life" style="margin-top:10px">
+      <div class="node p">④ Dev B สร้าง branch<small>แก้ไขงาน + commit</small></div>
+      <div class="ar">→<b>push</b></div>
+      <div class="node gr">⑤ branch ขึ้น GitHub</div>
+      <div class="ar">→</div>
+      <div class="node a">⑥ เปิด Pull request<small>แจ้ง Dev A ให้ตรวจ</small></div>
+    </div>
+    <div class="life" style="margin-top:10px">
+      <div class="node b">⑦ Dev A review code<small>comment / ขอแก้</small></div>
+      <div class="ar">→</div>
+      <div class="node gr">⑧ Approve → Merge เข้า main</div>
+      <div class="ar">→<b>git pull</b></div>
+      <div class="node p">⑨ ทุกคน pull ลง local</div>
+    </div>
+    <p class="note" style="margin-top:10px">ข้อดีของ pull request: มีคนตรวจก่อน merge ลดบั๊กในสายหลัก และเห็นประวัติการพูดคุยของการแก้ไข</p>
+  </div>
+</section>
+
+<!-- AUTH -->
+<section id="auth">
+  <h2>8 · Authentication กับ GitHub</h2>
+  <p class="sub">ตอน push / pull กับ remote ที่เป็น private หรือแก้ไขได้ GitHub ต้องรู้ว่าเราเป็นใคร</p>
+  <div class="grid">
+    <div class="card">
+      <span class="tag">วิธี ① HTTPS URL</span>
+      <p>ใช้ URL แบบ <code>https://github.com/user/repo.git</code> ครั้งแรกจะถาม <b>username</b> และ <b>Personal Access Token (PAT)</b></p>
+      <p class="note">PAT ใช้แทน password (GitHub ไม่รับ password ธรรมดาสำหรับ Git แล้ว) สร้างได้จากหน้า Settings บนเว็บ กำหนดสิทธิ์และวันหมดอายุได้</p>
+    </div>
+    <div class="card">
+      <span class="tag">วิธี ② SSH</span>
+      <p>ใช้ URL แบบ <code>git@github.com:user/repo.git</code> สร้างคู่กุญแจ แล้วเอา <b>Public Key</b> ไปใส่ใน GitHub (หลักการเดียวกับ SSH เข้า VM)</p>
+      <p class="note">เครื่องส่วนตัวเก็บ Private Key ไว้ ไม่ต้องกรอกอะไรทุกครั้ง</p>
+    </div>
+  </div>
+  <div class="card tw">
+    <h3>Credential manager (จำ token ไว้ ไม่ต้องกรอกซ้ำ)</h3>
+    <table>
+      <tr><th>ระบบ</th><th>ที่เก็บ</th></tr>
+      <tr><td>Windows</td><td>Windows Credential Manager</td></tr>
+      <tr><td>macOS</td><td>Keychain</td></tr>
+      <tr><td>Linux</td><td>GNOME Keyring (หรือติดตั้งตัวจัดการเอง)</td></tr>
+    </table>
+    <p class="note">ครั้งแรกกรอก username + PAT แล้วระบบจะเก็บไว้ ครั้งต่อไปไม่ถามอีก</p>
+  </div>
+
+  <h3>สรุปไว้ทวนก่อนสอบ</h3>
+  <div class="qa"><b>OS ทำไมต้องมี</b>เป็นตัวกลางจัดการทรัพยากร (CPU, RAM, storage, I/O) ให้หลาย App ใช้พร้อมกันได้โดยไม่ชนกัน และควบคุมสิทธิ์/ความปลอดภัย</div>
+  <div class="qa"><b>Permission POSIX กับ ACL ต่างกันอย่างไร</b>POSIX มี 3 กลุ่ม (owner/group/others) × 3 สิทธิ์ (r/w/x) ส่วน ACL เป็นรายการ ACE ที่ระบุ user/group รายตัวได้ มี Allow/Deny และ Deny ชนะ Allow</div>
+  <div class="qa"><b>chmod 664 คืออะไร</b>rw-rw-r-- (owner และ group อ่าน/เขียนได้ others อ่านได้อย่างเดียว)</div>
+  <div class="qa"><b>Git ต่างจาก GitHub</b>Git = เครื่องมือ version control ในเครื่อง · GitHub = บริการ cloud เก็บ remote repo พร้อมเครื่องมือทำงานทีม (pull request, issue, code review)</div>
+  <div class="qa"><b>push กับ pull</b>push = ส่ง commit จาก local ขึ้น remote · pull = ดึงอัปเดตจาก remote ลง local</div>
+  <div class="qa warn"><b>Pull request ใช้ทำอะไร</b>แจ้งทีมว่ามีการแก้ไขใน branch อยากให้ตรวจ (code review) แล้ว merge เข้า main</div>
+</section>
+
+</main>
+<footer>ขอให้สอบผ่านนะ ✌️</footer>
+<script>
+(function(){
+  var boxes=document.querySelectorAll('#calc input');
+  function upd(){
+    var sym='',num='';
+    for(var g=0;g<3;g++){
+      var sum=0;
+      for(var i=0;i<3;i++){
+        var b=boxes[g*3+i];
+        sym+=b.checked?'rwx'[i]:'-';
+        if(b.checked)sum+=parseInt(b.getAttribute('data-v'),10);
+      }
+      num+=sum;
+    }
+    document.getElementById('sym').textContent=sym;
+    document.getElementById('num').textContent=num;
+  }
+  for(var k=0;k<boxes.length;k++)boxes[k].addEventListener('change',upd);
+  upd();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Docker · HTTP/HTTPS · SSH – สรุปไว้ดูสอบ</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f4f6fb;--card:#fff;--text:#1c2433;--muted:#5d6881;--line:#dde3ef;--chip:#eef2ff;--code:#0f172a;--codet:#e2e8f0;
+  --blue:#3b82f6;--teal:#14b8a6;--purple:#8b5cf6;--amber:#f59e0b;--red:#ef4444;--green:#10b981;--pink:#ec4899;
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){--bg:#0f1420;--card:#171e2e;--text:#e8edf8;--muted:#9aa6c0;--line:#2a3550;--chip:#1f2a45;--code:#0a0f1a}
+}
+:root[data-theme="dark"]{--bg:#0f1420;--card:#171e2e;--text:#e8edf8;--muted:#9aa6c0;--line:#2a3550;--chip:#1f2a45;--code:#0a0f1a}
+html{height:100%;scroll-padding-top:70px}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:"Noto Sans Thai",system-ui,sans-serif;line-height:1.7;font-size:16px}
+header{padding:36px 20px 20px;text-align:center}
+header h1{margin:0 0 6px;font-size:clamp(24px,5vw,36px)}
+header p{margin:0;color:var(--muted)}
+nav{position:sticky;top:0;z-index:10;background:var(--bg);border-bottom:1px solid var(--line);display:flex;gap:8px;overflow-x:auto;padding:10px 16px;white-space:nowrap}
+nav a{flex:none;text-decoration:none;color:var(--text);background:var(--chip);padding:6px 14px;border-radius:99px;font-size:14px;font-weight:500}
+main{max-width:1000px;margin:0 auto;padding:16px}
+section{margin:30px 0}
+h2{font-size:23px;margin:0 0 4px}
+h3{margin:18px 0 6px;font-size:17px}
+.sub{color:var(--muted);margin:0 0 14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;margin-bottom:14px}
+.grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+code,.cmd{font-family:ui-monospace,Menlo,Consolas,monospace}
+code{background:var(--chip);padding:1px 6px;border-radius:5px;font-size:.88em}
+pre{background:var(--code);color:var(--codet);padding:12px 14px;border-radius:11px;overflow-x:auto;font-size:13px;line-height:1.6;margin:8px 0}
+pre .c{color:#7dd3fc}pre .k{color:#fca5a5}pre .g{color:#86efac}
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{border-bottom:1px solid var(--line);padding:9px 10px;text-align:left;vertical-align:top}
+th{background:var(--chip);font-size:13px}
+.note{font-size:14px;color:var(--muted)}
+.qa{border-left:4px solid var(--blue);padding:8px 14px;margin:10px 0;background:var(--chip);border-radius:0 10px 10px 0}
+.qa b{display:block;margin-bottom:2px}
+.warn{border-left-color:var(--red)}
+.tag{display:inline-block;font-size:12px;padding:2px 10px;border-radius:99px;background:var(--chip);color:var(--muted);margin-bottom:6px}
+/* lifecycle */
+.life{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px}
+.node{padding:10px 14px;border-radius:11px;color:#fff;font-weight:500;font-size:14px;text-align:center}
+.node small{display:block;font-weight:400;opacity:.92;font-size:12px}
+.ar{color:var(--muted);font-size:13px;text-align:center}
+.ar b{display:block;font-family:ui-monospace,Menlo,monospace;color:var(--text);font-size:12px}
+.b{background:var(--blue)}.t{background:var(--teal)}.p{background:var(--purple)}.a{background:var(--amber)}.r{background:var(--red)}.gr{background:var(--green)}.pk{background:var(--pink)}.sl{background:#64748b}
+/* sequence diagram */
+.seq{max-width:760px;margin:10px auto}
+.seq .h{display:grid;grid-template-columns:1fr 1.3fr 1fr;gap:6px;margin-bottom:6px}
+.seq .h div{padding:8px;border-radius:10px;color:#fff;text-align:center;font-weight:700;font-size:14px}
+.seq .h div small{display:block;font-weight:400;font-size:11px;opacity:.9}
+.m{display:grid;grid-template-columns:1fr 1.3fr 1fr;align-items:center;gap:6px;min-height:44px;position:relative}
+.m:before,.m:after{content:"";position:absolute;top:0;bottom:0;width:2px;background:var(--line)}
+.m:before{left:calc((100% - 12px)/3.3*1/2)}
+.m:after{right:calc((100% - 12px)/3.3*1/2)}
+.m .l,.m .rr{font-size:12.5px;color:var(--muted);padding:2px 4px;z-index:1}
+.m .rr{text-align:right}
+.m .mid{z-index:1;background:var(--card);border:2px solid var(--blue);border-radius:9px;padding:5px 9px;font-size:13px;text-align:center}
+.m .mid.go:after{content:" →"}.m .mid.back{border-color:var(--green)}.m .mid.back:before{content:"← "}
+.m .mid.sec{border-color:var(--purple);background:var(--chip)}
+.sep{text-align:center;font-size:12px;font-weight:700;color:var(--purple);margin:8px 0 2px;letter-spacing:.3px}
+/* http message */
+.msg{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(290px,1fr))}
+.part{display:block;padding:2px 6px;border-radius:5px}
+.p1{background:#3b82f633}.p2{background:#14b8a633}.p3{background:#8b5cf633}
+.legend{display:flex;flex-wrap:wrap;gap:8px 14px;font-size:13px;color:var(--muted);margin-top:6px}
+/* ssh topology */
+.net{display:flex;align-items:center;justify-content:center;gap:0;flex-wrap:wrap}
+.box{padding:12px 16px;border-radius:12px;color:#fff;font-weight:700;text-align:center;font-size:14px;min-width:150px}
+.box small{display:block;font-weight:400;font-size:12px}
+.pipe{flex:1;min-width:120px;max-width:260px;text-align:center;font-size:12px;color:var(--muted);padding:0 6px}
+.pipe i{display:block;height:8px;border-radius:99px;background:repeating-linear-gradient(90deg,var(--purple) 0 10px,transparent 10px 16px);margin:4px 0}
+footer{text-align:center;color:var(--muted);padding:24px;font-size:14px}
+</style>
+</head>
+<body>
+<header>
+  <h1>Docker · HTTP/HTTPS · SSH</h1>
+  <p>สรุปคำสั่ง หลักการทำงาน และภาพการเชื่อมต่อ ไว้ดูก่อนสอบ</p>
+</header>
+<nav><a href="#docker">1 Docker</a><a href="#http">2 HTTP</a><a href="#https">3 HTTPS/TLS</a><a href="#curl">4 curl</a><a href="#ssh">5 SSH</a><a href="#key">6 Public Key</a><a href="#scp">7 SCP/Nginx</a></nav>
+<main>
+
+<!-- DOCKER -->
+<section id="docker">
+  <h2>1 · Docker commands</h2>
+  <p class="sub">ออกเติมคำสั่งแน่นอน จำวงจรชีวิตของ container ก่อน แล้วคำสั่งจะตามมาเอง</p>
+
+  <div class="card">
+    <h3 style="margin-top:0">วงจรชีวิต Image → Container</h3>
+    <div class="life">
+      <div class="node sl">Docker Hub<small>คลัง image</small></div>
+      <div class="ar">→<b>docker pull</b></div>
+      <div class="node b">Image<small>แม่แบบ read-only</small></div>
+      <div class="ar">→<b>docker run</b></div>
+      <div class="node gr">Container<small>Running</small></div>
+    </div>
+    <div class="life" style="margin-top:12px">
+      <div class="node gr">Running</div>
+      <div class="ar">→<b>docker stop / Ctrl+C</b></div>
+      <div class="node a">Exited<small>หยุดแล้ว (ยังอยู่)</small></div>
+      <div class="ar">→<b>docker rm</b></div>
+      <div class="node r">ถูกลบ</div>
+    </div>
+    <div class="life" style="margin-top:12px">
+      <div class="node a">Exited</div>
+      <div class="ar">→<b>docker start</b></div>
+      <div class="node gr">Running (background)</div>
+    </div>
+    <p class="note" style="margin-top:12px">Image = แผ่นติดตั้ง · Container = image ที่กำลังรัน สร้างได้หลายตัวจาก image เดียว · Tag = เวอร์ชัน เช่น <code>nginx:latest</code></p>
+  </div>
+
+  <div class="card tw">
+    <table>
+      <tr><th>ต้องการ</th><th>คำสั่ง</th></tr>
+      <tr><td>ดาวน์โหลด image</td><td><code>docker pull &lt;image&gt;:&lt;tag&gt;</code></td></tr>
+      <tr><td>ดูรายการ image</td><td><code>docker image list</code> หรือ <code>docker images</code></td></tr>
+      <tr><td>สร้างและรัน container</td><td><code>docker run &lt;image&gt;</code></td></tr>
+      <tr><td>รัน + map port + ตั้งชื่อ</td><td><code>docker run -p 8080:80 --name my_web nginx</code></td></tr>
+      <tr><td>รันแบบ background</td><td><code>docker run -d -p 8088:80 --name project01 nginx</code></td></tr>
+      <tr><td>ดู container ที่กำลังรัน</td><td><code>docker ps</code></td></tr>
+      <tr><td>ดู container ทั้งหมด (รวมที่หยุด)</td><td><code>docker ps -a</code></td></tr>
+      <tr><td>เริ่ม container ที่หยุดอยู่</td><td><code>docker start &lt;name&gt;</code></td></tr>
+      <tr><td>หยุด</td><td><code>docker stop &lt;name&gt;</code></td></tr>
+      <tr><td>restart</td><td><code>docker restart &lt;name&gt;</code></td></tr>
+      <tr><td>เข้า terminal ใน container</td><td><code>docker exec -it &lt;name&gt; bash</code></td></tr>
+      <tr><td>ดู log / ดูสด</td><td><code>docker logs &lt;name&gt;</code> / <code>docker logs -f &lt;name&gt;</code></td></tr>
+      <tr><td>ดูรายละเอียด (IP, port, config)</td><td><code>docker inspect &lt;name&gt;</code></td></tr>
+      <tr><td>ดูการใช้ CPU/RAM สด (กด q ออก)</td><td><code>docker stats</code></td></tr>
+      <tr><td>ลบ container / ลบแบบบังคับ</td><td><code>docker rm &lt;name&gt;</code> / <code>docker rm -f &lt;name&gt;</code></td></tr>
+      <tr><td>ลบ image</td><td><code>docker rmi &lt;image&gt;</code></td></tr>
+    </table>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <h3 style="margin-top:0">Flag ที่ต้องรู้</h3>
+      <p><code>-p 8080:80</code> พอร์ต host 8080 → พอร์ตใน container 80 (<b>host อยู่หน้า</b>)</p>
+      <p><code>-d</code> detached รันเบื้องหลัง terminal ไม่ค้าง</p>
+      <p><code>--name</code> ตั้งชื่อ container</p>
+      <p><code>-i</code> interactive + <code>-t</code> จัด terminal ให้ (รวมเป็น <code>-it</code>)</p>
+      <p><code>-f</code> ใน logs = follow ติดตามสด</p>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0">Port mapping เป็นภาพ</h3>
+      <div class="net" style="flex-direction:column;gap:6px">
+        <div class="box b" style="width:100%">เบราว์เซอร์<small>http://IP:8080</small></div>
+        <div class="ar">↓</div>
+        <div class="box sl" style="width:100%">Host (VM / เครื่องเรา)<small>พอร์ต 8080</small></div>
+        <div class="ar">↓ <code>-p 8080:80</code></div>
+        <div class="box gr" style="width:100%">Container nginx<small>พอร์ต 80</small></div>
+      </div>
+      <p class="note">เปิดได้เฉพาะพอร์ตที่ map ไว้ เปิดพอร์ต 80 ของ host ตรงๆ ไม่ได้ถ้าไม่ได้ map</p>
+    </div>
+  </div>
+
+  <h3>สิ่งที่สังเกตได้จากแล็บ (ถามเหตุผลแน่)</h3>
+  <div class="qa"><b>docker run ไม่ใส่ -d</b>container รันแบบ foreground ผูกกับ terminal เห็น log ตอนมี request เข้ามา และใช้ terminal ต่อไม่ได้</div>
+  <div class="qa"><b>กด Ctrl+C</b>container หยุด (status Exited) เพราะ process หลักถูกปิด</div>
+  <div class="qa"><b>docker ps หลังหยุด</b>ไม่เห็น เพราะแสดงเฉพาะที่กำลังรัน ต้องใช้ <code>docker ps -a</code> จะเห็น status Exited</div>
+  <div class="qa"><b>docker start ต่างจาก docker run</b>start ใช้ container เดิมที่มีอยู่ ไม่สร้างใหม่ และรันเบื้องหลัง ส่วน run สร้าง container ใหม่ทุกครั้ง</div>
+  <div class="qa warn"><b>docker run --name my_web ซ้ำ → error</b>ชื่อซ้ำกับ container เดิมที่ยังอยู่ (แม้หยุดแล้ว) ต้องลบก่อนหรือใช้ชื่ออื่น</div>
+  <div class="qa warn"><b>docker rm ตอนที่ยังรันอยู่ → ลบไม่ได้</b>ต้อง <code>docker stop</code> ก่อนแล้วค่อย <code>docker rm</code> หรือใช้ <code>docker rm -f</code> ครั้งเดียว</div>
+  <div class="qa"><b>หลัง docker stop เปิดเว็บไม่ได้</b>container หยุดแล้ว ไม่มี process รับ request</div>
+  <div class="qa"><b>docker exec -it my_web bash</b>prompt เปลี่ยนเป็น <code>root@&lt;container id&gt;</code> ไฟล์ที่เห็นคือระบบไฟล์ใน container ไม่ใช่ของ VM</div>
+  <div class="qa"><b>docker logs</b>แสดง output ที่ container พิมพ์ออกมา เช่น access log ของ nginx ตอนมีคนเข้าเว็บ</div>
+
+  <h3>ติดตั้ง Docker (ลำดับขั้น)</h3>
+<pre><span class="c">1.</span> sudo apt update &amp;&amp; sudo apt install ca-certificates curl gnupg lsb-release -y
+<span class="c">2.</span> สร้าง /etc/apt/keyrings แล้วโหลด GPG key ของ Docker ด้วย curl
+<span class="c">3.</span> เพิ่ม Docker repository เข้า /etc/apt/sources.list.d/docker.list
+<span class="c">4.</span> sudo apt update            <span class="g"># ให้ระบบรู้จัก repo ใหม่</span>
+<span class="c">5.</span> sudo apt install docker-ce docker-ce-cli containerd.io ...
+<span class="c">6.</span> sudo systemctl status docker   <span class="g"># ต้องเห็น active (running)</span></pre>
+  <p class="note">ต้องมี GPG key เพื่อตรวจว่าแพ็กเกจที่โหลดมาเป็นของ Docker จริงและไม่ถูกแก้ไข</p>
+</section>
+
+<!-- HTTP -->
+<section id="http">
+  <h2>2 · HTTP ทำงานอย่างไร</h2>
+  <p class="sub">HTTP = โปรโตคอลแบบ <b>Request / Response</b> ฝั่ง Client ขอ ฝั่ง Server ตอบ (พอร์ต 80) ไม่เข้ารหัส</p>
+
+  <div class="card">
+    <h3 style="margin-top:0">ขั้นตอนตั้งแต่พิมพ์ URL จนได้หน้าเว็บ</h3>
+    <div class="seq">
+      <div class="h"><div class="b">Client<small>เบราว์เซอร์ / curl</small></div><div class="sl">เครือข่าย</div><div class="t">Server<small>เช่น Nginx</small></div></div>
+      <div class="m"><div class="l">1. พิมพ์ http://example.com</div><div class="mid go">DNS: ขอ IP ของชื่อโดเมน</div><div class="rr">DNS Server ตอบ IP</div></div>
+      <div class="m"><div class="l">2. รู้ IP แล้ว</div><div class="mid go">TCP handshake (SYN, SYN-ACK, ACK)</div><div class="rr">ต่อพอร์ต 80 ติด</div></div>
+      <div class="m"><div class="l">3. ส่ง Request</div><div class="mid go">GET /index.html + Headers</div><div class="rr">อ่าน request</div></div>
+      <div class="m"><div class="l">รอรับ</div><div class="mid back">200 OK + Headers + Body (HTML)</div><div class="rr">4. ส่ง Response</div></div>
+      <div class="m"><div class="l">5. เบราว์เซอร์แสดงผลหน้าเว็บ</div><div class="mid">ปิดหรือใช้ต่อ (keep-alive)</div><div class="rr"></div></div>
+    </div>
+  </div>
+
+  <div class="msg">
+    <div class="card">
+      <span class="tag">Request (Client → Server)</span>
+<pre><span class="part p1">POST /anything HTTP/1.1</span><span class="part p2">Host: httpbin.org
+User-Agent: curl/8.0
+Content-Type: application/x-www-form-urlencoded
+Cookie: session_id=42</span><span class="part p3">
+value=panda</span></pre>
+      <div class="legend"><span><b style="color:var(--blue)">■</b> Request line = Method + Path + เวอร์ชัน</span><span><b style="color:var(--teal)">■</b> Headers</span><span><b style="color:var(--purple)">■</b> Body (ข้อมูลที่ส่ง)</span></div>
+    </div>
+    <div class="card">
+      <span class="tag">Response (Server → Client)</span>
+<pre><span class="part p1">HTTP/1.1 200 OK</span><span class="part p2">Content-Type: application/json
+Set-Cookie: theme=dark</span><span class="part p3">
+{ "form": {"value":"panda"},
+  "headers": {...}, "args": {} }</span></pre>
+      <div class="legend"><span><b style="color:var(--blue)">■</b> Status line = เวอร์ชัน + Status code</span><span><b style="color:var(--teal)">■</b> Headers</span><span><b style="color:var(--purple)">■</b> Body</span></div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="card tw">
+      <h3 style="margin-top:0">Method</h3>
+      <table>
+        <tr><td><code>GET</code></td><td>ขอข้อมูล</td></tr>
+        <tr><td><code>POST</code></td><td>ส่งข้อมูล (ฟอร์ม, JSON)</td></tr>
+        <tr><td><code>HEAD</code></td><td>ขอแต่ Header ไม่เอา Body</td></tr>
+        <tr><td><code>PUT</code></td><td>แก้ไข / แทนที่</td></tr>
+        <tr><td><code>DELETE</code></td><td>ลบ</td></tr>
+      </table>
+    </div>
+    <div class="card tw">
+      <h3 style="margin-top:0">Status Code</h3>
+      <table>
+        <tr><td><b>1xx</b></td><td>ข้อมูลเบื้องต้น · 100 Continue</td></tr>
+        <tr><td><b style="color:var(--green)">2xx</b></td><td>สำเร็จ · 200 OK</td></tr>
+        <tr><td><b style="color:var(--amber)">3xx</b></td><td>Redirect · 301 Moved Permanently, 302 Found</td></tr>
+        <tr><td><b style="color:var(--red)">4xx</b></td><td>Client ผิด · 400 Bad Request, 401 Unauthorized, 403 Forbidden, 404 Not Found</td></tr>
+        <tr><td><b style="color:var(--red)">5xx</b></td><td>Server ผิด · 500 Internal Server Error, 502 Bad Gateway, 503 Service Unavailable</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <h3 style="margin-top:0">Header ที่เจอบ่อย</h3>
+      <p><code>Content-Type</code> ชนิดข้อมูลใน body (ส่ง JSON ต้องมี <code>application/json</code>)</p>
+      <p><code>User-Agent</code> บอกว่า request มาจากโปรแกรมอะไร</p>
+      <p><code>Cookie</code> client ส่ง cookie กลับไป</p>
+      <p><code>Set-Cookie</code> server สั่งให้ client เก็บ cookie</p>
+      <p><code>Authorization</code> ข้อมูลยืนยันตัวตน (เช่น Basic Base64)</p>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0">Cookie ทำงานอย่างไร</h3>
+      <p>HTTP เป็น <b>stateless</b> (server ไม่จำว่าใครเป็นใคร) จึงใช้ cookie จำสถานะ เช่น session login</p>
+      <p>① Login → ② Server ตอบ <code>Set-Cookie: session_id=42</code> → ③ Client เก็บ → ④ ครั้งต่อไปส่ง <code>Cookie: session_id=42</code> → ⑤ Server รู้ว่าเป็นคนเดิม</p>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0">Query Parameter</h3>
+      <p>ตัวแปรต่อท้าย URL หลัง <code>?</code> รูปแบบ <code>ชื่อ=ค่า</code> คั่นหลายตัวด้วย <code>&amp;</code></p>
+      <pre>https://httpbin.org/anything?a=1&amp;b=2</pre>
+      <p class="note">ใน JSON ตอบกลับ ค่าพวกนี้อยู่ในฟิลด์ <code>args</code> ส่วนข้อมูลฟอร์มอยู่ใน <code>form</code></p>
+    </div>
+  </div>
+</section>
+
+<!-- HTTPS -->
+<section id="https">
+  <h2>3 · HTTPS = HTTP + TLS</h2>
+  <p class="sub">เนื้อหา HTTP เหมือนเดิมทุกอย่าง แต่ถูก <b>เข้ารหัสด้วย SSL/TLS</b> ก่อนส่ง (พอร์ต 443)</p>
+
+  <div class="grid">
+    <div class="card">
+      <h3 style="margin-top:0">HTTP</h3>
+      <p>ข้อความส่งเป็นตัวหนังสือธรรมดา ใครดักกลางทางก็อ่านรหัสผ่านหรือ cookie ได้ และแก้ไขข้อมูลระหว่างทางได้</p>
+      <p class="note">พอร์ต 80 · ไม่มี certificate</p>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0">HTTPS</h3>
+      <p>ข้อมูลถูกเข้ารหัส ดักไปก็อ่านไม่ออก และมี <b>certificate</b> ยืนยันว่าเว็บนี้เป็นของจริง ไม่ใช่เว็บปลอม</p>
+      <p class="note">พอร์ต 443 · ใช้ SSL/TLS</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-top:0">TLS handshake แบบย่อ (ก่อนส่ง HTTP จริง)</h3>
+    <div class="seq">
+      <div class="h"><div class="b">Client</div><div class="sl">เครือข่าย</div><div class="t">Server</div></div>
+      <div class="m"><div class="l">1. ต่อ TCP พอร์ต 443</div><div class="mid go">TCP handshake</div><div class="rr"></div></div>
+      <div class="m"><div class="l">2. ClientHello</div><div class="mid go">ส่งรายการวิธีเข้ารหัสที่รองรับ</div><div class="rr"></div></div>
+      <div class="m"><div class="l"></div><div class="mid back">ServerHello + Certificate</div><div class="rr">3. เลือกวิธีเข้ารหัส + ส่ง cert</div></div>
+      <div class="m"><div class="l">4. ตรวจ certificate ว่าออกโดย CA ที่เชื่อถือ ชื่อโดเมนตรง ไม่หมดอายุ</div><div class="mid go">แลกเปลี่ยนข้อมูลสร้างกุญแจ</div><div class="rr"></div></div>
+      <div class="m"><div class="l">5. ได้ session key ตรงกัน</div><div class="mid sec">เสร็จ handshake</div><div class="rr">5. ได้ session key ตรงกัน</div></div>
+      <div class="sep">🔒 จากนี้ไปทุกอย่างเข้ารหัสด้วย session key</div>
+      <div class="m"><div class="l">6. GET /index.html</div><div class="mid sec go">HTTP (เข้ารหัส)</div><div class="rr"></div></div>
+      <div class="m"><div class="l"></div><div class="mid sec back">200 OK + Body (เข้ารหัส)</div><div class="rr">7. ตอบกลับ</div></div>
+    </div>
+    <p class="note">ใช้ Asymmetric (certificate/กุญแจสาธารณะ) ตอนเริ่มเพื่อตกลงกุญแจอย่างปลอดภัย แล้วใช้ Symmetric (session key) เข้ารหัสข้อมูลจริง เพราะเร็วกว่า</p>
+  </div>
+  <div class="qa"><b>ทำไม curl https://google.com (ไม่มี -L) ได้หน้า 301</b>เพราะ server สั่ง redirect ไปอีกที่หนึ่ง curl ไม่ตามไปเอง ต้องใส่ <code>-L</code> จึงได้หน้าจริง</div>
+  <div class="qa"><b>-k ใช้ทำอะไร</b>ข้ามการตรวจ certificate (insecure) ใช้ตอนทดสอบเท่านั้น เพราะเสี่ยงโดนเว็บปลอม</div>
+</section>
+
+<!-- CURL -->
+<section id="curl">
+  <h2>4 · curl flag ทั้งหมดจากแล็บ</h2>
+  <p class="sub">curl = เครื่องมือ command line ส่ง request ไป server ใช้ทดสอบ Web API โดยไม่ต้องมี GUI</p>
+  <div class="card tw">
+    <table>
+      <tr><th>Flag</th><th>หน้าที่</th></tr>
+      <tr><td>(ไม่ใส่อะไร)</td><td>ส่ง GET</td></tr>
+      <tr><td><code>-X POST</code></td><td>บังคับเปลี่ยน method</td></tr>
+      <tr><td><code>-d "value=panda"</code></td><td>ส่ง Form Data และเปลี่ยนเป็น POST อัตโนมัติ</td></tr>
+      <tr><td><code>-H "Content-Type: application/json"</code></td><td>กำหนด Header เพิ่ม (ส่ง JSON ต้องมี)</td></tr>
+      <tr><td><code>-A "..."</code></td><td>กำหนด User-Agent (หรือ <code>-H "User-Agent: ..."</code>)</td></tr>
+      <tr><td><code>-b "session_id=42"</code></td><td>ส่ง Cookie ไปกับ request (ใส่ชื่อไฟล์ก็ได้)</td></tr>
+      <tr><td><code>-c cookies.txt</code></td><td>บันทึก cookie ที่ได้รับลงไฟล์</td></tr>
+      <tr><td><code>-I</code></td><td>ส่ง HEAD ขอแต่ Header</td></tr>
+      <tr><td><code>-v</code></td><td>verbose แสดงรายละเอียด (DNS, handshake, request/response header)</td></tr>
+      <tr><td><code>-o output.txt</code></td><td>บันทึกผลลงไฟล์ที่ตั้งชื่อเอง แทนแสดงบนจอ</td></tr>
+      <tr><td><code>-L</code></td><td>ตาม Redirect (3xx)</td></tr>
+      <tr><td><code>-k</code></td><td>ข้ามการตรวจ SSL/TLS certificate</td></tr>
+      <tr><td><code>--limit-rate 10k</code></td><td>จำกัดความเร็ว</td></tr>
+      <tr><td><code>-u user:pass</code></td><td>Basic Authentication (ถูกแปลงเป็น <code>Authorization: Basic &lt;Base64&gt;</code>)</td></tr>
+    </table>
+  </div>
+  <div class="grid">
+    <div class="card">
+      <b>จำง่าย:</b> <code>-b</code> = bring ส่ง cookie ไปให้ server · <code>-c</code> = collect เก็บ cookie ลงไฟล์
+    </div>
+    <div class="card">
+      <b>ข้อควรจำ</b>
+      <p>URL ที่มี <code>?</code> หรือ <code>&amp;</code> ต้องอยู่ใน <code>"..."</code> ไม่งั้น terminal ตีความเป็นคำสั่ง</p>
+      <p>ส่ง JSON ให้ครอบด้วย single quote: <code>-d '{"value": "panda"}'</code></p>
+      <p>curl แสดง Body ของหน้า error (เช่น 404) ด้วย ไม่ตัดทิ้ง</p>
+      <p><code>/anything</code> ของ httpbin = Echo Server สะท้อน request กลับมาเป็น JSON</p>
+    </div>
+  </div>
+</section>
+
+<!-- SSH -->
+<section id="ssh">
+  <h2>5 · SSH การเชื่อมต่อ</h2>
+  <p class="sub">SSH = โปรโตคอลเข้าควบคุมเครื่องระยะไกล <b>เข้ารหัสข้อมูลระหว่างทาง</b> (พอร์ต 22) กันการดักฟังและ Man-in-the-Middle</p>
+
+  <div class="card">
+    <div class="net">
+      <div class="box b">Client<small>เครื่องเรา<br>มี Private Key</small></div>
+      <div class="pipe"><i></i>ท่อเข้ารหัส SSH<br>พอร์ต 22</div>
+      <div class="box t">Server (VM)<small>debian@10.70.1.14<br>มี Public Key</small></div>
+    </div>
+    <p class="note" style="text-align:center">ใครดักกลางทางก็เห็นแต่ข้อมูลที่อ่านไม่ออก</p>
+<pre><span class="c">ssh</span> &lt;username&gt;@&lt;IP Address&gt;
+<span class="c">ssh</span> debian@10.70.1.14
+<span class="g"># ออกจาก server:</span> exit  หรือ  logout</pre>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-top:0">ลำดับตอนต่อ SSH (แบบ password)</h3>
+    <div class="seq">
+      <div class="h"><div class="b">Client</div><div class="sl">เครือข่าย</div><div class="t">Server</div></div>
+      <div class="m"><div class="l">1. ssh debian@IP</div><div class="mid go">ต่อ TCP พอร์ต 22</div><div class="rr"></div></div>
+      <div class="m"><div class="l"></div><div class="mid back">ส่ง host key (fingerprint) มาให้</div><div class="rr">2. แสดงตัวตนของเครื่อง</div></div>
+      <div class="m"><div class="l">3. ครั้งแรกถามให้ตอบ <code>yes</code> เก็บใน known_hosts</div><div class="mid sec">ตกลงวิธีเข้ารหัส + สร้างกุญแจร่วม</div><div class="rr"></div></div>
+      <div class="sep">🔒 จากนี้ช่องทางเข้ารหัสแล้ว</div>
+      <div class="m"><div class="l">4. พิมพ์ password (ไม่เห็นตัวอักษรขึ้น ปกติ)</div><div class="mid sec go">ส่งรหัสผ่านผ่านท่อเข้ารหัส</div><div class="rr"></div></div>
+      <div class="m"><div class="l"></div><div class="mid sec back">ยืนยันผ่าน → เปิด shell</div><div class="rr">5. อนุญาตเข้าใช้งาน</div></div>
+      <div class="m"><div class="l">6. พิมพ์คำสั่ง</div><div class="mid sec go">ทุกคำสั่งและผลลัพธ์เข้ารหัส</div><div class="rr">รันบน server</div></div>
+    </div>
+    <p class="note"><b>Host key / fingerprint</b> ช่วยให้รู้ว่าเรากำลังคุยกับ server ตัวจริง ถ้า fingerprint เปลี่ยนไปโดยไม่รู้สาเหตุ อาจมีคนแอบอยู่กลางทาง (MITM)</p>
+  </div>
+</section>
+
+<!-- KEY -->
+<section id="key">
+  <h2>6 · Public Key Authentication</h2>
+  <p class="sub">ไม่ต้องพิมพ์ password และไม่ต้องส่งรหัสผ่านผ่านเครือข่าย Cloud ส่วนใหญ่บังคับใช้วิธีนี้เพราะ password ถูกเดาง่าย</p>
+
+  <div class="grid">
+    <div class="card">
+      <span class="tag">Private Key</span>
+      <p><code>id_ed25519</code> อยู่ที่เครื่องเรา (Client) <b style="color:var(--red)">ห้ามแชร์เด็ดขาด</b></p>
+    </div>
+    <div class="card">
+      <span class="tag">Public Key</span>
+      <p><code>id_ed25519.pub</code> ติดตั้งบน Server ในไฟล์ <code>~/.ssh/authorized_keys</code> แจกได้</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-top:0">ตั้งค่า 3 ขั้น</h3>
+<pre><span class="c">1.</span> ssh-keygen -t ed25519          <span class="g"># สร้างคู่กุญแจบน Client (ได้ไฟล์ใน ~/.ssh/)</span>
+<span class="c">2.</span> คัดลอกเนื้อหา id_ed25519.pub ไปใส่ ~/.ssh/authorized_keys บน Server
+<span class="c">3.</span> logout แล้ว ssh ใหม่               <span class="g"># เข้าได้โดยไม่ถาม password</span>
+<span class="g"># ระบุ key เอง:</span> ssh -i /path/to/private_key debian@IP</pre>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-top:0">หลักการทำงาน (Challenge &amp; Response)</h3>
+    <div class="seq">
+      <div class="h"><div class="b">Client<small>Private Key</small></div><div class="sl">เครือข่าย</div><div class="t">Server<small>Public Key</small></div></div>
+      <div class="m"><div class="l">1. เริ่มเชื่อมต่อ ระบุ user</div><div class="mid go">ขอ login ด้วย key</div><div class="rr"></div></div>
+      <div class="m"><div class="l"></div><div class="mid back">Challenge (ข้อความสุ่ม)</div><div class="rr">2. สร้างข้อความสุ่มส่งมา</div></div>
+      <div class="m"><div class="l">3. พิสูจน์ด้วย Private Key (ลงลายมือชื่อ / sign)</div><div class="mid go">ส่งผลที่ได้กลับไป</div><div class="rr"></div></div>
+      <div class="m"><div class="l"></div><div class="mid sec">ตรวจด้วย Public Key</div><div class="rr">4. ตรงกันไหม?</div></div>
+      <div class="m"><div class="l"></div><div class="mid back">ผ่าน → เข้าสู่ระบบ</div><div class="rr">5. ตรง = ผ่าน ไม่ส่ง password เลย</div></div>
+    </div>
+    <p class="note">ในสไลด์แล็บเขียนว่า Client "encrypt" ด้วย Private Key จริงๆ แล้วคือการลงลายมือชื่อ (sign) ตอนสอบเขียนตามที่แล็บเขียนได้ แต่รู้ไว้ว่าหลักการคือ Private Key พิสูจน์ตัวตน Public Key ตรวจ</p>
+  </div>
+
+  <div class="qa warn"><b>ถ้าเพื่อนเอา Private Key ของเขามา ssh เข้า VM เรา</b>เข้าไม่ได้ เพราะ VM เรามีแต่ Public Key ของเรา ซึ่งคู่กับ Private Key ของเราเท่านั้น</div>
+  <div class="qa"><b>ถ้าลืม password ตอนสร้าง Cloud VM และยังไม่ตั้ง Public Key</b>จะเข้า VM ไม่ได้อีก เพราะระบบแสดง password ครั้งเดียวตอนสร้าง (username ของ Debian template = <code>debian</code>)</div>
+  <div class="qa"><b>ชนิดคีย์</b>ed25519 (ที่ใช้ในแล็บ) และ rsa (<code>id_rsa</code>)</div>
+</section>
+
+<!-- SCP -->
+<section id="scp">
+  <h2>7 · SCP และ Nginx</h2>
+  <div class="grid">
+    <div class="card">
+      <h3 style="margin-top:0">SCP (Secure Copy)</h3>
+      <p>ส่งไฟล์ผ่านเครือข่าย โดยทำงานบน SSH จึงเข้ารหัส รูปแบบคล้าย <code>cp</code></p>
+<pre><span class="c">scp</span> index.html debian@&lt;IP&gt;:~/
+<span class="c">scp -i</span> /path/to/private_key index.html debian@&lt;IP&gt;:~/</pre>
+      <p class="note"><b>ต้นทางอยู่หน้า</b> ปลายทาง (user@ip:path) อยู่หลัง · <code>~/</code> = home ของ user นั้น · ตั้ง Public Key แล้วจะไม่ถามรหัสผ่าน</p>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0">Nginx (Web Server พอร์ต 80)</h3>
+<pre>sudo apt update
+sudo apt install nginx
+sudo systemctl status nginx   <span class="g"># active (running)</span>
+sudo mv index.html /var/www/html/</pre>
+      <p class="note">เปิด <code>http://&lt;IP&gt;</code> จะเห็น "Welcome to nginx!" · ไฟล์เว็บอยู่ที่ <code>/var/www/html</code> · ต้องใช้ sudo เพราะสิทธิ์โฟลเดอร์</p>
+    </div>
+  </div>
+  <div class="card tw">
+    <table>
+      <tr><th>systemctl</th><th>ความหมาย</th></tr>
+      <tr><td><code>status</code></td><td>ดูสถานะ</td></tr>
+      <tr><td><code>start</code> / <code>stop</code></td><td>เริ่ม / หยุด</td></tr>
+      <tr><td><code>restart</code></td><td>หยุดแล้วเริ่มใหม่</td></tr>
+      <tr><td><code>reload</code></td><td>โหลด config ใหม่โดยไม่ตัดการเชื่อมต่อ</td></tr>
+      <tr><td><code>enable</code> / <code>disable</code></td><td>ให้เริ่มเอง / ยกเลิกเริ่มเองตอนบูต</td></tr>
+    </table>
+  </div>
+  <div class="qa"><b>apt update ต่างจาก apt upgrade</b>update = ดึงรายการแพ็กเกจล่าสุดจาก repository · upgrade = อัปเกรดโปรแกรมที่ติดตั้งไว้เป็นเวอร์ชันใหม่</div>
+</section>
+
+</main>
+<footer>ขอให้สอบผ่านนะ ✌️</footer>
+</body>
+</html>

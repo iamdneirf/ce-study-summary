@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>VM / Container / WSL – สรุปไว้ดูสอบ</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f4f6fb;--card:#fff;--text:#1c2433;--muted:#5d6881;--line:#dde3ef;
+  --app:#14b8a6;--guest:#8b5cf6;--vmm:#3b82f6;--host:#64748b;--hw:#94a3b8;--kernel:#f59e0b;--warn:#ef4444;--ok:#10b981;
+  --ontint:#fff;--chip:#eef2ff;
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){--bg:#0f1420;--card:#171e2e;--text:#e8edf8;--muted:#9aa6c0;--line:#2a3550;--chip:#1f2a45;
+  --hw:#475569;--host:#56657d}
+}
+:root[data-theme="dark"]{--bg:#0f1420;--card:#171e2e;--text:#e8edf8;--muted:#9aa6c0;--line:#2a3550;--chip:#1f2a45;--hw:#475569;--host:#56657d}
+html{height:100%;scroll-padding-top:70px}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:"Noto Sans Thai",system-ui,sans-serif;line-height:1.7;font-size:16px}
+header{padding:36px 20px 24px;text-align:center}
+header h1{margin:0 0 6px;font-size:clamp(24px,5vw,36px)}
+header p{margin:0;color:var(--muted)}
+nav{position:sticky;top:0;z-index:10;background:var(--bg);border-bottom:1px solid var(--line);display:flex;gap:8px;overflow-x:auto;padding:10px 16px;white-space:nowrap}
+nav a{flex:none;text-decoration:none;color:var(--text);background:var(--chip);padding:6px 14px;border-radius:99px;font-size:14px;font-weight:500}
+main{max-width:1000px;margin:0 auto;padding:16px}
+section{margin:28px 0}
+h2{font-size:22px;margin:0 0 4px;display:flex;align-items:center;gap:10px}
+h2 .n{background:var(--vmm);color:#fff;width:32px;height:32px;border-radius:50%;display:inline-grid;place-items:center;font-size:15px}
+.sub{color:var(--muted);margin:0 0 14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;margin-bottom:14px}
+.grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+.card h3{margin:0 0 4px;font-size:17px}
+.tag{display:inline-block;font-size:12px;padding:2px 10px;border-radius:99px;background:var(--chip);color:var(--muted);margin-bottom:8px}
+.tag.new{background:var(--kernel);color:#fff}
+/* stack diagram: top = app, bottom = hardware (like the picture) */
+.stack{display:flex;flex-direction:column;gap:5px;margin:10px 0}
+.L{border-radius:9px;padding:8px 10px;text-align:center;font-size:14px;font-weight:500;color:#fff}
+.L small{display:block;font-weight:400;opacity:.9;font-size:12px}
+.app{background:var(--app)}.guest{background:var(--guest)}.vmm{background:var(--vmm)}.host{background:var(--host)}.hw{background:var(--hw)}.kernel{background:var(--kernel)}.trans{background:var(--warn)}.para{background:#ec4899}
+.row{display:flex;gap:6px}
+.row>*{flex:1}
+.vmbox{border:2px dashed var(--guest);border-radius:11px;padding:6px;display:flex;flex-direction:column;gap:4px}
+.vmbox .L{padding:5px 6px;font-size:13px}
+.vmbox .t{font-size:12px;color:var(--guest);font-weight:700;text-align:center}
+.dir{text-align:center;color:var(--muted);font-size:12px}
+.note{font-size:14px;color:var(--muted)}
+.ok{color:var(--ok);font-weight:700}.bad{color:var(--warn);font-weight:700}
+/* flow */
+.flow{display:flex;flex-direction:column;align-items:stretch;max-width:520px;margin:0 auto}
+.step{display:flex;align-items:center;gap:12px}
+.step .num{flex:none;width:30px;height:30px;border-radius:50%;background:var(--card);border:2px solid var(--line);display:grid;place-items:center;font-weight:700;font-size:14px}
+.step .L{flex:1;text-align:left}
+.arrow{margin-left:14px;padding-left:22px;border-left:3px solid var(--line);color:var(--muted);font-size:13px;padding-top:2px;padding-bottom:2px}
+.arrow.up{border-left-style:dashed}
+table{width:100%;border-collapse:collapse;font-size:14px}
+.tw{overflow-x:auto}
+th,td{border-bottom:1px solid var(--line);padding:9px 10px;text-align:left;vertical-align:top}
+th{background:var(--chip);font-size:13px}
+.qa{border-left:4px solid var(--vmm);padding:8px 14px;margin:10px 0;background:var(--chip);border-radius:0 10px 10px 0}
+.qa b{display:block;margin-bottom:2px}
+.chain{font-family:ui-monospace,Menlo,monospace;font-size:13px;background:var(--chip);padding:8px 12px;border-radius:9px;margin:8px 0;overflow-x:auto;white-space:nowrap}
+.legend{display:flex;flex-wrap:wrap;gap:8px 14px;font-size:13px;color:var(--muted);margin-top:8px}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+footer{text-align:center;color:var(--muted);padding:24px;font-size:14px}
+</style>
+</head>
+<body>
+<header>
+  <h1>VM · Container · WSL</h1>
+  <p>สรุปภาพชั้น (layer) และลำดับการทำงาน ไว้ดูก่อนสอบ Introduction to Computer Engineering</p>
+</header>
+<nav>
+  <a href="#vm">1 VM</a><a href="#flow">2 ลำดับทำงาน</a><a href="#container">3 Container</a><a href="#wsl">4 WSL 1/2/3</a><a href="#compare">5 เทียบ</a><a href="#qa">6 ตอบข้อสอบ</a>
+</nav>
+<main>
+
+<div class="card">
+  <b>วิธีอ่านภาพ:</b> วาดแบบในรูปที่ส่งมา คือ <b>บนสุด = Application</b> ล่างสุด = <b>Hardware</b> ส่วนในข้อสอบที่ให้ “เรียงจากล่างขึ้นบน” ก็อ่านภาพจากล่างขึ้นบนได้เลย
+  <div class="legend">
+    <span><i style="background:var(--app)"></i>Application</span>
+    <span><i style="background:var(--guest)"></i>Guest OS</span>
+    <span><i style="background:var(--vmm)"></i>Hypervisor / VMM / Docker Engine</span>
+    <span><i style="background:var(--host)"></i>Host OS</span>
+    <span><i style="background:var(--hw)"></i>Hardware</span>
+    <span><i style="background:var(--kernel)"></i>Linux kernel</span>
+  </div>
+</div>
+
+<!-- 1 VM -->
+<section id="vm">
+  <h2><span class="n">1</span>VM และ Hypervisor</h2>
+  <p class="sub">VM = คอมจำลองบนเครื่องจริง มี Guest OS ของตัวเอง แยกขาดจาก Host · Hypervisor = ตัวสร้างและแบ่งทรัพยากรให้ VM</p>
+  <div class="grid">
+    <div class="card">
+      <span class="tag">Type 1 · Bare-metal</span>
+      <h3>Hypervisor ลงบนฮาร์ดแวร์ตรง</h3>
+      <div class="stack">
+        <div class="row">
+          <div class="vmbox"><div class="t">VM-1</div><div class="L app">Application</div><div class="L guest">Guest OS</div></div>
+          <div class="vmbox"><div class="t">VM-n</div><div class="L app">Application</div><div class="L guest">Guest OS</div></div>
+        </div>
+        <div class="L vmm">Hypervisor<small>ESXi, Hyper-V, KVM, Xen</small></div>
+        <div class="L hw">Hardware</div>
+      </div>
+      <p class="note">ไม่มี Host OS คั่น → เร็วกว่า ใช้ใน Data center / Cloud</p>
+    </div>
+
+    <div class="card">
+      <span class="tag">Type 2 · Hosted (รูป D)</span>
+      <h3>Hypervisor เป็นโปรแกรมบน Host OS</h3>
+      <div class="stack">
+        <div class="row">
+          <div class="vmbox"><div class="t">VM-1</div><div class="L app">Application</div><div class="L guest">Guest OS-1</div></div>
+          <div class="vmbox"><div class="t">VM-n</div><div class="L app">Application</div><div class="L guest">Guest OS-n</div></div>
+        </div>
+        <div class="L vmm">Hypervisor / VMM<small>VirtualBox, VMware Workstation</small></div>
+        <div class="L host">Host OS<small>เช่น Windows</small></div>
+        <div class="L hw">Hardware</div>
+      </div>
+      <p class="note">มี Host OS อีกชั้น → ช้ากว่า ใช้บนเครื่องส่วนตัว</p>
+    </div>
+
+    <div class="card">
+      <span class="tag">Hosted แบบรูป C</span>
+      <h3>แอปปกติ + VM อยู่ข้างกัน</h3>
+      <div class="stack">
+        <div class="row">
+          <div class="L app">App</div><div class="L app">App</div><div class="L app">App</div>
+          <div class="vmbox"><div class="L app">Application</div><div class="L guest">Guest OS</div></div>
+        </div>
+        <div class="row">
+          <div class="L host">Host OS</div>
+          <div class="L vmm">VMM</div>
+        </div>
+        <div class="L hw">Hardware</div>
+      </div>
+      <p class="note">แอปธรรมดารันบน Host OS ตรงๆ ส่วน VMM เป็นอีกโปรแกรมที่รัน VM ที่มี Guest OS ของตัวเอง</p>
+    </div>
+  </div>
+  <div class="chain"><b>Type 2 (ล่าง→บน):</b> Hardware → Host OS → Hypervisor → Guest OS → Application</div>
+  <div class="chain"><b>Type 1 (ล่าง→บน):</b> Hardware → Hypervisor → Guest OS → Application</div>
+</section>
+
+<!-- 2 Flow -->
+<section id="flow">
+  <h2><span class="n">2</span>ลำดับการทำงานของ VM (Type 2)</h2>
+  <p class="sub">ข้อบรรยายที่น่าจะออก: แอปใน VM ขอใช้ทรัพยากรผ่านกี่ชั้นกว่าจะถึงฮาร์ดแวร์จริง</p>
+  <div class="card">
+    <div class="flow">
+      <div class="step"><div class="num">1</div><div class="L app">Application (ใน VM)</div></div>
+      <div class="arrow">ขอใช้ทรัพยากร ↓</div>
+      <div class="step"><div class="num">2</div><div class="L guest">Guest OS (เช่น Debian)</div></div>
+      <div class="arrow">system call / คำสั่ง hardware (เสมือน) ↓</div>
+      <div class="step"><div class="num">3</div><div class="L vmm">Hypervisor (เช่น VirtualBox)</div></div>
+      <div class="arrow">ส่งต่อคำขอ ↓</div>
+      <div class="step"><div class="num">4</div><div class="L host">Host OS (เช่น Windows)</div></div>
+      <div class="arrow">จัดสรรทรัพยากร ↓</div>
+      <div class="step"><div class="num">5</div><div class="L hw">Hardware จริง (CPU, RAM, Disk, NIC)</div></div>
+      <div class="arrow up">ผลลัพธ์ย้อนกลับขึ้นมาตามเส้นทางเดิม ↑</div>
+    </div>
+    <div class="qa"><b>ประโยคสรุปไว้ตอบ</b>VM จำลองฮาร์ดแวร์ทั้งเครื่องแล้วลง Guest OS ของตัวเอง แอปขอทรัพยากรผ่าน Guest OS → Hypervisor → Host OS → Hardware จริง</div>
+  </div>
+</section>
+
+<!-- 3 Container -->
+<section id="container">
+  <h2><span class="n">3</span>Container / Docker เทียบกับ VM</h2>
+  <p class="sub">Container แชร์ Kernel ของ Host จึงเล็กและเร็ว ไม่มี Guest OS</p>
+  <div class="grid">
+    <div class="card">
+      <span class="tag">VM</span>
+      <div class="stack">
+        <div class="row">
+          <div class="vmbox"><div class="L app">App</div><div class="L guest">Guest OS<small>kernel ใหม่</small></div></div>
+          <div class="vmbox"><div class="L app">App</div><div class="L guest">Guest OS<small>kernel ใหม่</small></div></div>
+        </div>
+        <div class="L vmm">Hypervisor</div>
+        <div class="L host">Host OS</div>
+        <div class="L hw">Hardware</div>
+      </div>
+      <p class="note">หลาย GB · เปิดเป็นนาที · แยกตัวแข็งแรงกว่า</p>
+    </div>
+    <div class="card">
+      <span class="tag">Container</span>
+      <div class="stack">
+        <div class="row">
+          <div class="L app">App + lib<small>Container 1</small></div>
+          <div class="L app">App + lib<small>Container 2</small></div>
+          <div class="L app">App + lib<small>Container 3</small></div>
+        </div>
+        <div class="L vmm">Docker Engine (Container runtime)</div>
+        <div class="L host">Host OS<small>Kernel ที่ทุก container ใช้ร่วมกัน</small></div>
+        <div class="L hw">Hardware</div>
+      </div>
+      <p class="note">หลาย MB · เปิดเป็นวินาที · แยกตัวเบากว่า</p>
+    </div>
+  </div>
+  <div class="chain"><b>Container (ล่าง→บน):</b> Hardware → Host OS (Kernel) → Docker Engine → Container (App + library)</div>
+</section>
+
+<!-- 4 WSL -->
+<section id="wsl">
+  <h2><span class="n">4</span>WSL 1 · WSL 2 · WSL 3</h2>
+  <p class="sub">WSL = รัน Linux บน Windows โดยไม่ต้อง dual boot</p>
+  <div class="grid">
+    <div class="card">
+      <span class="tag">WSL 1 · แปลคำสั่ง</span>
+      <div class="stack">
+        <div class="L app">Application / Terminal</div>
+        <div class="L guest">Linux distro (Ubuntu ฯลฯ)<small>userland เท่านั้น</small></div>
+        <div class="L trans">Translation layer<small>แปล Linux syscall → Windows NT call</small></div>
+        <div class="L host">Windows (NT kernel)</div>
+        <div class="L hw">Hardware</div>
+      </div>
+      <p class="note"><span class="bad">ไม่มี</span> Linux kernel จริง · เข้าถึงไฟล์ Windows (/mnt/c) เร็วกว่า · บางอย่างใช้ไม่ได้</p>
+    </div>
+    <div class="card">
+      <span class="tag">WSL 2 · VM เบา</span>
+      <div class="stack">
+        <div class="L app">Application / Terminal</div>
+        <div class="L guest">Linux distro (Ubuntu ฯลฯ)</div>
+        <div class="L kernel">Linux kernel จริง<small>Microsoft ทำมา</small></div>
+        <div class="L vmm">Lightweight VM<small>สร้างและจัดการอัตโนมัติ</small></div>
+        <div class="L host">Windows + Hyper-V / Virtual Machine Platform</div>
+        <div class="L hw">Hardware</div>
+      </div>
+      <p class="note"><span class="ok">มี</span> Linux kernel จริง · เข้ากันได้เกือบสมบูรณ์ (Docker ได้ดี) · ไฟล์ใน Linux เร็วกว่า</p>
+    </div>
+    <div class="card">
+      <span class="tag new">WSL 3 · ใหม่ (Preview Build 2026)</span>
+      <div class="stack">
+        <div class="L app">Application / Terminal</div>
+        <div class="L guest">Linux distro / Linux container</div>
+        <div class="L kernel">Linux kernel<small>(ยังเป็นแนว Linux จริง)</small></div>
+        <div class="L para">Paravirtualized layer<small>บางกว่า VM เต็มรูปแบบ ต่อ GPU/NPU ตรงขึ้น</small></div>
+        <div class="L host">Windows</div>
+        <div class="L hw">Hardware (CPU / GPU / NPU)</div>
+      </div>
+      <p class="note">เป้าหมาย: งาน AI และ container ใกล้ความเร็ว native มากขึ้น · ภาพนี้เป็นการสรุปแบบง่ายจากข่าวที่ออกมา รายละเอียดอาจเปลี่ยน</p>
+    </div>
+  </div>
+  <div class="chain"><b>WSL 1:</b> Hardware → Windows NT → Translation layer → Distro → App</div>
+  <div class="chain"><b>WSL 2:</b> Hardware → Windows + Hyper-V → Lightweight VM → Linux kernel → Distro → App</div>
+  <div class="chain"><b>WSL 3:</b> Hardware → Windows → Paravirtualized layer → Linux kernel → Distro → App</div>
+  <div class="card"><b>ข้อควรรู้:</b> ในเอกสารสรุปของวิชามีแค่ WSL 1 กับ WSL 2 ข้อสอบน่าจะออกแค่สองตัวนี้ ส่วน WSL 3 ถือเป็นความรู้เสริม ถ้าอาจารย์ไม่ได้สอน ไม่ต้องตอบ WSL 3 ในข้อสอบ</div>
+</section>
+
+<!-- 5 compare -->
+<section id="compare">
+  <h2><span class="n">5</span>ตารางเทียบรวม</h2>
+  <div class="card tw">
+    <table>
+      <tr><th></th><th>VM</th><th>Container</th><th>WSL 1</th><th>WSL 2</th></tr>
+      <tr><th>Kernel</th><td>ของตัวเอง (Guest OS)</td><td>แชร์ของ Host</td><td>ไม่มี Linux kernel (แปล syscall)</td><td>Linux kernel จริงใน VM เบา</td></tr>
+      <tr><th>จำลองอะไร</th><td>ฮาร์ดแวร์ทั้งเครื่อง</td><td>สภาพแวดล้อมของแอป</td><td>ชั้นแปลคำสั่ง</td><td>VM ขนาดเบา</td></tr>
+      <tr><th>ขนาด/เวลาเปิด</th><td>หลาย GB / นาที</td><td>หลาย MB / วินาที</td><td>เบามาก</td><td>เบา เปิดเร็ว</td></tr>
+      <tr><th>ตัวจัดการ</th><td>Hypervisor</td><td>Docker Engine</td><td>Windows</td><td>Hyper-V / VM Platform</td></tr>
+      <tr><th>ไฟล์ใน Linux</th><td>-</td><td>-</td><td>ช้ากว่า</td><td>เร็วกว่า</td></tr>
+      <tr><th>ไฟล์ฝั่ง Windows (/mnt/c)</th><td>-</td><td>-</td><td>เร็วกว่า</td><td>ช้ากว่า</td></tr>
+    </table>
+  </div>
+</section>
+
+<!-- 6 QA -->
+<section id="qa">
+  <h2><span class="n">6</span>คำตอบสั้นไว้ตอบข้อบรรยาย</h2>
+  <div class="qa"><b>VM ต่างจาก Container อย่างไร</b>VM จำลองฮาร์ดแวร์ทั้งเครื่องและมี Guest OS พร้อม Kernel ของตัวเอง ทำงานผ่าน Hypervisor ส่วน Container จำลองแค่ระดับแอปและแชร์ Kernel กับ Host OS จึงเล็ก เปิดเร็ว ใช้ทรัพยากรน้อยกว่า แต่แยกตัวอ่อนกว่า VM</div>
+  <div class="qa"><b>Type 1 ต่างจาก Type 2 อย่างไร</b>Type 1 ลงบนฮาร์ดแวร์โดยตรง (ESXi, Hyper-V, KVM) เร็วกว่า Type 2 ลงบน Host OS อีกที (VirtualBox, VMware Workstation) จึงมีอีกชั้นและช้ากว่า</div>
+  <div class="qa"><b>WSL 2 อยู่ชั้นไหน</b>อยู่เหนือ Windows โดยใช้ Hyper-V / Virtual Machine Platform สร้าง VM เบาที่รัน Linux kernel จริง แล้วลง distro ทับ ลำดับล่างขึ้นบน: Hardware → Windows + Hyper-V → Lightweight VM → Linux kernel → Distro → Application</div>
+  <div class="qa"><b>WSL 1 ต่างจาก WSL 2</b>WSL 1 แปล Linux system call เป็น Windows NT call ไม่มี Linux kernel จริง ส่วน WSL 2 รัน Linux kernel จริงใน VM เบา เข้ากันได้กับ Linux มากกว่า และเร็วกว่าเมื่อทำงานกับไฟล์ใน Linux</div>
+  <div class="qa"><b>VirtualBox เป็น Hypervisor ชนิดใด</b>Type 2 (Hosted)</div>
+</section>
+
+</main>
+<footer>ขอให้สอบผ่านนะ ✌️</footer>
+</body>
+</html>
