@@ -12,8 +12,6 @@ So I put them here. If they help you understand a topic a little faster, great.
 
 Each subject has its own folder. Inside you'll find my notes on the main topics, plus labs and examples where they make sense.
 
-| Subject | What it covers |
-
 | Introduction to Computer Engineering | curl, VM and SSH, Docker, Linux basics |
 
 More coming... I add a new folder as I finish each subject
